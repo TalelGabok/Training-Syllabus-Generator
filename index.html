@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Syllabus Generator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script>
+        const { useState, createElement: h } = React;
+        
+        // Lucide icons will be loaded after script loads
+        let FileText, Download, Settings, Loader2, CheckCircle;
+        
+        function App() {
+          const [apiConfig, setApiConfig] = useState({
+            provider: 'openai',
+            apiKey: ''
+          });
+
+          const [showApiConfig, setShowApiConfig] = useState(true);
+          const [isGenerating, setIsGenerating] = useState(false);
+          const [generatedSyllabus, setGeneratedSyllabus] = useState(null);
+
+          const [intakeData, setIntakeData] = useState({
+            companyName: '',
+            websiteUrl: '',
+            aliases: '',
+            industry: '',
+            subsector: '',
+            naics: '',
+            hqCity: '',
+            hqRegion: '',
+            regionsToCover: '',
+            companySize: '',
+            contactName: '',
+            contactRole: '',
+            contactEmail: '',
+            librariesCandidate: [],
+            businessGoals: '',
+            painPoints: '',
+            targetAudienceRoles: '',
+            audienceSize: '',
+            deliveryPreference: 'in_person',
+            timeline: '',
+            urgencyDriver: '',
+            competitors: '',
+            productsProcesses: '',
+            regulatoryScope: [],
+            internalKeywords: '',
+            fundingRegion: '',
+            recencyWindowMonths: '6',
+            excludeTerms: '',
+            links: '',
+            documents: '',
+            kpis: '',
+            toolsInPlace: '',
+            scanDepth: 'standard',
+            reportFormat: 'PDF',
+            citationStyle: 'links_list'
+          });
+
+          const libraryOptions = [
+            'leadership_supervisory',
+            'operational_excellence_lean_ci',
+            'quality_systems_compliance',
+            'change_leadership_culture',
+            'safety_operational_risk',
+            'supply_chain_lean_logistics',
+            'metrics_data_driven_decisions',
+            'soft_skills_operations'
+          ];
+
+          const regulatoryOptions = [
+            'ISO 9001',
+            'ISO 13485',
+            'FDA 21 CFR 820',
+            'cGMP',
+            'OSHA',
+            'EPA'
+          ];
+
+          const handleLibraryToggle = (library) => {
+            setIntakeData(prev => ({
+              ...prev,
+              librariesCandidate: prev.librariesCandidate.includes(library)
+                ? prev.librariesCandidate.filter(l => l !== library)
+                : [...prev.librariesCandidate, library]
+            }));
+          };
+
+          const handleRegulatoryToggle = (reg) => {
+            setIntakeData(prev => ({
+              ...prev,
+              regulatoryScope: prev.regulatoryScope.includes(reg)
+                ? prev.regulatoryScope.filter(r => r !== reg)
+                : [...prev.regulatoryScope, reg]
+            }));
+          };
+
+          const handleInputChange = (field, value) => {
+            setIntakeData(prev => ({ ...prev, [field]: value }));
+          };
+
+          const generateSyllabus = async () => {
+            if (!apiConfig.apiKey) {
+              alert('Please enter your API key in the configuration section');
+              return;
+            }
+
+            setIsGenerating(true);
+
+            const prompt = `You are an expert training curriculum designer for Manex, a manufacturing excellence consulting organization.
+
+Based on the following client intake information, generate a comprehensive training syllabus in JSON format.
+
+INTAKE DATA:
+Company: ${intakeData.companyName}
+Industry: ${intakeData.industry} - ${intakeData.subsector}
+Target Audience: ${intakeData.targetAudienceRoles}
+Training Libraries: ${intakeData.librariesCandidate.join(', ')}
+Business Goals: ${intakeData.businessGoals}
+Pain Points: ${intakeData.painPoints}
+Delivery Mode: ${intakeData.deliveryPreference}
+
+Generate a JSON object with:
+{
+  "training_category": "primary domain",
+  "course_title": "compelling title",
+  "description": "2-3 paragraph description",
+  "objectives": ["at least 5 learning objectives"],
+  "target_audience": "detailed description",
+  "training_method": "delivery method details",
+  "estimated_duration": "duration",
+  "prerequisites": "requirements",
+  "curriculum": ["at least 8 curriculum topics"],
+  "materials": ["materials needed"],
+  "resources": ["recommended resources"],
+  "companion_courses": ["related courses"],
+  "estimated_cost_to_develop": "cost range",
+  "estimated_pricing": "pricing guidance",
+  "roi": "expected ROI",
+  "notes": "additional notes"
+}
+
+Return ONLY valid JSON.`;
+
+            try {
+              let response;
+              
+              if (apiConfig.provider === 'openai') {
+                response = await fetch('https://api.openai.com/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiConfig.apiKey}`
+                  },
+                  body: JSON.stringify({
+                    model: 'gpt-4o',
+                    messages: [
+                      { role: 'system', content: 'You are an expert training curriculum designer. Always respond with valid JSON only.' },
+                      { role: 'user', content: prompt }
+                    ],
+                    temperature: 0.7
+                  })
+                });
+              } else {
+                response = await fetch('https://api.anthropic.com/v1/messages', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiConfig.apiKey,
+                    'anthropic-version': '2023-06-01'
+                  },
+                  body: JSON.stringify({
+                    model: 'claude-sonnet-4-20250514',
+                    max_tokens: 4096,
+                    messages: [{ role: 'user', content: prompt }]
+                  })
+                });
+              }
+
+              if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+              }
+
+              const data = await response.json();
+              let syllabusJson;
+
+              if (apiConfig.provider === 'openai') {
+                syllabusJson = JSON.parse(data.choices[0].message.content);
+              } else {
+                syllabusJson = JSON.parse(data.content[0].text);
+              }
+
+              setGeneratedSyllabus(syllabusJson);
+            } catch (error) {
+              alert(`Error: ${error.message}`);
+            } finally {
+              setIsGenerating(false);
+            }
+          };
+
+          const downloadJSON = () => {
+            const blob = new Blob([JSON.stringify(generatedSyllabus, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${intakeData.companyName.replace(/\s+/g, '_')}_Syllabus.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          };
+
+          const downloadHTML = () => {
+            const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>${generatedSyllabus.course_title}</title>
+<style>
+body{font-family:Calibri,Arial,sans-serif;max-width:900px;margin:40px auto;padding:40px;line-height:1.6}
+.header{border-bottom:4px solid #8B1F1F;padding-bottom:20px;margin-bottom:30px}
+h1{color:#8B1F1F;font-size:28px}
+h2{color:#4A7C9C;font-size:20px;border-bottom:2px solid #4A7C9C;padding-bottom:5px}
+.meta-info{background:#f5f5f5;padding:15px;border-radius:5px;margin:20px 0}
+</style></head><body>
+<div class="header"><h1>MANEX</h1><p>The Corporation for Manufacturing Excellence</p></div>
+<h1>${generatedSyllabus.course_title}</h1>
+<div class="meta-info">
+<p><strong>Client:</strong> ${intakeData.companyName}</p>
+<p><strong>Category:</strong> ${generatedSyllabus.training_category}</p>
+<p><strong>Duration:</strong> ${generatedSyllabus.estimated_duration}</p>
+</div>
+<h2>Description</h2><p>${generatedSyllabus.description}</p>
+<h2>Objectives</h2><ul>${generatedSyllabus.objectives.map(o => `<li>${o}</li>`).join('')}</ul>
+<h2>Curriculum</h2><ul>${generatedSyllabus.curriculum.map(c => `<li>${c}</li>`).join('')}</ul>
+${generatedSyllabus.estimated_pricing ? `<h2>Investment</h2><p>${generatedSyllabus.estimated_pricing}</p>` : ''}
+</body></html>`;
+            
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${intakeData.companyName.replace(/\s+/g, '_')}_Syllabus.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+          };
+
+          return h('div', { className: 'min-h-screen bg-gray-50' },
+            h('div', { className: 'bg-gradient-to-r from-red-900 to-red-800 text-white py-6 px-8' },
+              h('div', { className: 'max-w-7xl mx-auto' },
+                h('h1', { className: 'text-3xl font-bold' }, 'Training Syllabus Generator'),
+                h('p', { className: 'text-red-100 mt-1' }, 'AI-Powered Custom Training Development')
+              )
+            ),
+            h('div', { className: 'max-w-7xl mx-auto p-8' },
+              h('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
+                h('h2', { className: 'text-xl font-semibold mb-4' }, 'API Configuration'),
+                h('div', { className: 'grid grid-cols-2 gap-4' },
+                  h('select', {
+                    value: apiConfig.provider,
+                    onChange: (e) => setApiConfig(prev => ({ ...prev, provider: e.target.value })),
+                    className: 'px-4 py-2 border rounded-lg'
+                  },
+                    h('option', { value: 'openai' }, 'OpenAI'),
+                    h('option', { value: 'anthropic' }, 'Anthropic')
+                  ),
+                  h('input', {
+                    type: 'password',
+                    value: apiConfig.apiKey,
+                    onChange: (e) => setApiConfig(prev => ({ ...prev, apiKey: e.target.value })),
+                    placeholder: 'Enter API Key',
+                    className: 'px-4 py-2 border rounded-lg'
+                  })
+                )
+              ),
+              h('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
+                h('h2', { className: 'text-xl font-semibold mb-4' }, 'Company Information'),
+                h('div', { className: 'space-y-4' },
+                  h('input', {
+                    type: 'text',
+                    value: intakeData.companyName,
+                    onChange: (e) => handleInputChange('companyName', e.target.value),
+                    placeholder: 'Company Name *',
+                    className: 'w-full px-4 py-2 border rounded-lg'
+                  }),
+                  h('input', {
+                    type: 'text',
+                    value: intakeData.industry,
+                    onChange: (e) => handleInputChange('industry', e.target.value),
+                    placeholder: 'Industry *',
+                    className: 'w-full px-4 py-2 border rounded-lg'
+                  }),
+                  h('input', {
+                    type: 'text',
+                    value: intakeData.targetAudienceRoles,
+                    onChange: (e) => handleInputChange('targetAudienceRoles', e.target.value),
+                    placeholder: 'Target Audience',
+                    className: 'w-full px-4 py-2 border rounded-lg'
+                  })
+                )
+              ),
+              h('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
+                h('h2', { className: 'text-xl font-semibold mb-4' }, 'Training Libraries'),
+                h('div', { className: 'space-y-2' },
+                  ...libraryOptions.map(lib =>
+                    h('label', { key: lib, className: 'flex items-center space-x-2' },
+                      h('input', {
+                        type: 'checkbox',
+                        checked: intakeData.librariesCandidate.includes(lib),
+                        onChange: () => handleLibraryToggle(lib),
+                        className: 'w-4 h-4'
+                      }),
+                      h('span', null, lib.replace(/_/g, ' '))
+                    )
+                  )
+                )
+              ),
+              h('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
+                h('textarea', {
+                  value: intakeData.businessGoals,
+                  onChange: (e) => handleInputChange('businessGoals', e.target.value),
+                  placeholder: 'Business Goals',
+                  rows: 3,
+                  className: 'w-full px-4 py-2 border rounded-lg mb-4'
+                }),
+                h('textarea', {
+                  value: intakeData.painPoints,
+                  onChange: (e) => handleInputChange('painPoints', e.target.value),
+                  placeholder: 'Pain Points',
+                  rows: 3,
+                  className: 'w-full px-4 py-2 border rounded-lg'
+                })
+              ),
+              h('button', {
+                onClick: generateSyllabus,
+                disabled: isGenerating,
+                className: 'w-full py-4 bg-red-900 text-white rounded-lg font-semibold hover:bg-red-800 disabled:opacity-50'
+              }, isGenerating ? 'Generating...' : 'Generate Syllabus'),
+              generatedSyllabus && h('div', { className: 'bg-white rounded-lg shadow-lg p-8 mt-8' },
+                h('div', { className: 'flex justify-between mb-6' },
+                  h('h2', { className: 'text-2xl font-bold' }, 'Generated Syllabus'),
+                  h('div', { className: 'flex gap-3' },
+                    h('button', {
+                      onClick: downloadJSON,
+                      className: 'px-4 py-2 bg-blue-600 text-white rounded-lg'
+                    }, 'Download JSON'),
+                    h('button', {
+                      onClick: downloadHTML,
+                      className: 'px-4 py-2 bg-green-600 text-white rounded-lg'
+                    }, 'Download HTML')
+                  )
+                ),
+                h('h3', { className: 'text-xl font-bold mb-2' }, generatedSyllabus.course_title),
+                h('p', { className: 'text-gray-700 mb-4' }, generatedSyllabus.description),
+                h('h4', { className: 'font-semibold mt-4' }, 'Objectives:'),
+                h('ul', { className: 'list-disc list-inside' },
+                  ...generatedSyllabus.objectives.map((obj, i) =>
+                    h('li', { key: i }, obj)
+                  )
+                )
+              )
+            )
+          );
+        }
+
+        // Wait for page load, then render
+        window.addEventListener('load', () => {
+          ReactDOM.render(h(App), document.getElementById('root'));
+        });
+    </script>
+</body>
+</html>
