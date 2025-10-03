@@ -6,18 +6,22 @@
     <title>Training Syllabus Generator</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div id="root"></div>
     
-    <script>
-        const { useState, createElement: h } = React;
+    <script type="text/babel">
+        const { useState } = React;
         
-        // Lucide icons will be loaded after script loads
-        let FileText, Download, Settings, Loader2, CheckCircle;
-        
+        // Simple icon components
+        const FileTextIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+        const DownloadIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
+        const SettingsIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+        const LoaderIcon = () => <svg className="animate-spin w-6 h-6" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
+        const CheckIcon = () => <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+
         function App() {
           const [apiConfig, setApiConfig] = useState({
             provider: 'openai',
@@ -67,24 +71,17 @@
           });
 
           const libraryOptions = [
-            'leadership_supervisory',
-            'operational_excellence_lean_ci',
-            'quality_systems_compliance',
-            'change_leadership_culture',
-            'safety_operational_risk',
-            'supply_chain_lean_logistics',
-            'metrics_data_driven_decisions',
-            'soft_skills_operations'
+            { id: 'leadership_supervisory', label: 'Leadership & Supervisory' },
+            { id: 'operational_excellence_lean_ci', label: 'Operational Excellence & Lean/CI' },
+            { id: 'quality_systems_compliance', label: 'Quality Systems & Compliance' },
+            { id: 'change_leadership_culture', label: 'Change Leadership & Culture' },
+            { id: 'safety_operational_risk', label: 'Safety & Operational Risk' },
+            { id: 'supply_chain_lean_logistics', label: 'Supply Chain & Lean Logistics' },
+            { id: 'metrics_data_driven_decisions', label: 'Metrics & Data-Driven Decisions' },
+            { id: 'soft_skills_operations', label: 'Soft Skills for Operations' }
           ];
 
-          const regulatoryOptions = [
-            'ISO 9001',
-            'ISO 13485',
-            'FDA 21 CFR 820',
-            'cGMP',
-            'OSHA',
-            'EPA'
-          ];
+          const regulatoryOptions = ['ISO 9001', 'ISO 13485', 'FDA 21 CFR 820', 'cGMP', 'OSHA', 'EPA'];
 
           const handleLibraryToggle = (library) => {
             setIntakeData(prev => ({
@@ -129,27 +126,37 @@ Business Goals: ${intakeData.businessGoals}
 Pain Points: ${intakeData.painPoints}
 Delivery Mode: ${intakeData.deliveryPreference}
 
-Generate a JSON object with:
+MANEX EXPERTISE DOMAINS:
+- leadership_supervisory: transition to management, goal setting, communication, delegation, decision making, coaching
+- operational_excellence_lean_ci: lean fundamentals, 5S, kaizen, VSM, standard work, A3, DMAIC
+- quality_systems_compliance: ISO 9001, ISO 13485, FDA QSR, cGMP, risk management, CAPA, auditing
+- change_leadership_culture: change models, stakeholder engagement, CI culture, resistance management
+- safety_operational_risk: safety culture, hazard ID, behavior-based safety, incident investigation
+- supply_chain_lean_logistics: lean supply chain, inventory, kanban, supplier quality
+- metrics_data_driven_decisions: data literacy, KPI definition, dashboards, SPC, control charts
+- soft_skills_operations: communication, influencing, time management, conflict resolution
+
+Generate a JSON object with these fields:
 {
-  "training_category": "primary domain",
-  "course_title": "compelling title",
-  "description": "2-3 paragraph description",
-  "objectives": ["at least 5 learning objectives"],
+  "training_category": "primary domain from above",
+  "course_title": "compelling, specific title",
+  "description": "2-3 paragraphs describing the course",
+  "objectives": ["array of at least 5 specific learning objectives"],
   "target_audience": "detailed description",
-  "training_method": "delivery method details",
-  "estimated_duration": "duration",
-  "prerequisites": "requirements",
-  "curriculum": ["at least 8 curriculum topics"],
-  "materials": ["materials needed"],
-  "resources": ["recommended resources"],
+  "training_method": "${intakeData.deliveryPreference} with specifics",
+  "estimated_duration": "reasonable duration",
+  "prerequisites": "what participants should know",
+  "curriculum": ["array of at least 8 detailed topics"],
+  "materials": ["materials and resources needed"],
+  "resources": ["recommended readings, tools"],
   "companion_courses": ["related courses"],
   "estimated_cost_to_develop": "cost range",
-  "estimated_pricing": "pricing guidance",
-  "roi": "expected ROI",
-  "notes": "additional notes"
+  "estimated_pricing": "per-participant pricing",
+  "roi": "expected ROI and business impact",
+  "notes": "additional recommendations"
 }
 
-Return ONLY valid JSON.`;
+CRITICAL: Return ONLY valid JSON with no other text before or after.`;
 
             try {
               let response;
@@ -164,7 +171,7 @@ Return ONLY valid JSON.`;
                   body: JSON.stringify({
                     model: 'gpt-4o',
                     messages: [
-                      { role: 'system', content: 'You are an expert training curriculum designer. Always respond with valid JSON only.' },
+                      { role: 'system', content: 'You are an expert training curriculum designer. Always respond with valid JSON only, no other text.' },
                       { role: 'user', content: prompt }
                     ],
                     temperature: 0.7
@@ -187,21 +194,32 @@ Return ONLY valid JSON.`;
               }
 
               if (!response.ok) {
-                throw new Error(`API Error: ${response.status}`);
+                const errorData = await response.text();
+                throw new Error(`API Error ${response.status}: ${errorData}`);
               }
 
               const data = await response.json();
-              let syllabusJson;
+              let content;
 
               if (apiConfig.provider === 'openai') {
-                syllabusJson = JSON.parse(data.choices[0].message.content);
+                content = data.choices[0].message.content;
               } else {
-                syllabusJson = JSON.parse(data.content[0].text);
+                content = data.content[0].text;
               }
 
+              // Clean the content - remove markdown code blocks if present
+              let cleanedContent = content.trim();
+              if (cleanedContent.startsWith('```json')) {
+                cleanedContent = cleanedContent.replace(/^```json\n/, '').replace(/\n```$/, '');
+              } else if (cleanedContent.startsWith('```')) {
+                cleanedContent = cleanedContent.replace(/^```\n/, '').replace(/\n```$/, '');
+              }
+
+              const syllabusJson = JSON.parse(cleanedContent);
               setGeneratedSyllabus(syllabusJson);
             } catch (error) {
-              alert(`Error: ${error.message}`);
+              console.error('Generation error:', error);
+              alert(`Error generating syllabus: ${error.message}\n\nPlease check:\n1. Your API key is correct\n2. You have credits/quota available\n3. Your internet connection is stable`);
             } finally {
               setIsGenerating(false);
             }
@@ -219,26 +237,52 @@ Return ONLY valid JSON.`;
 
           const downloadHTML = () => {
             const html = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>${generatedSyllabus.course_title}</title>
-<style>
-body{font-family:Calibri,Arial,sans-serif;max-width:900px;margin:40px auto;padding:40px;line-height:1.6}
-.header{border-bottom:4px solid #8B1F1F;padding-bottom:20px;margin-bottom:30px}
-h1{color:#8B1F1F;font-size:28px}
-h2{color:#4A7C9C;font-size:20px;border-bottom:2px solid #4A7C9C;padding-bottom:5px}
-.meta-info{background:#f5f5f5;padding:15px;border-radius:5px;margin:20px 0}
-</style></head><body>
-<div class="header"><h1>MANEX</h1><p>The Corporation for Manufacturing Excellence</p></div>
-<h1>${generatedSyllabus.course_title}</h1>
-<div class="meta-info">
-<p><strong>Client:</strong> ${intakeData.companyName}</p>
-<p><strong>Category:</strong> ${generatedSyllabus.training_category}</p>
-<p><strong>Duration:</strong> ${generatedSyllabus.estimated_duration}</p>
-</div>
-<h2>Description</h2><p>${generatedSyllabus.description}</p>
-<h2>Objectives</h2><ul>${generatedSyllabus.objectives.map(o => `<li>${o}</li>`).join('')}</ul>
-<h2>Curriculum</h2><ul>${generatedSyllabus.curriculum.map(c => `<li>${c}</li>`).join('')}</ul>
-${generatedSyllabus.estimated_pricing ? `<h2>Investment</h2><p>${generatedSyllabus.estimated_pricing}</p>` : ''}
-</body></html>`;
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${generatedSyllabus.course_title}</title>
+    <style>
+        body { font-family: Calibri, Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 40px; line-height: 1.6; color: #333; }
+        .header { border-bottom: 4px solid #8B1F1F; padding-bottom: 20px; margin-bottom: 30px; }
+        .company-name { color: #8B1F1F; font-size: 24px; font-weight: bold; }
+        h1 { color: #8B1F1F; font-size: 28px; }
+        h2 { color: #4A7C9C; font-size: 20px; border-bottom: 2px solid #4A7C9C; padding-bottom: 5px; margin-top: 25px; }
+        .meta-info { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        ul { padding-left: 25px; }
+        li { margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">MANEX</div>
+        <p>The Corporation for Manufacturing Excellence</p>
+    </div>
+    <h1>${generatedSyllabus.course_title}</h1>
+    <div class="meta-info">
+        <p><strong>Client:</strong> ${intakeData.companyName}</p>
+        <p><strong>Category:</strong> ${generatedSyllabus.training_category}</p>
+        <p><strong>Duration:</strong> ${generatedSyllabus.estimated_duration}</p>
+        <p><strong>Method:</strong> ${generatedSyllabus.training_method}</p>
+    </div>
+    <h2>Description</h2>
+    <p>${generatedSyllabus.description}</p>
+    <h2>Target Audience</h2>
+    <p>${generatedSyllabus.target_audience}</p>
+    <h2>Learning Objectives</h2>
+    <ul>${generatedSyllabus.objectives.map(o => `<li>${o}</li>`).join('')}</ul>
+    <h2>Prerequisites</h2>
+    <p>${generatedSyllabus.prerequisites}</p>
+    <h2>Curriculum</h2>
+    <ul>${generatedSyllabus.curriculum.map(c => `<li>${c}</li>`).join('')}</ul>
+    ${generatedSyllabus.materials && generatedSyllabus.materials.length > 0 ? `<h2>Materials</h2><ul>${generatedSyllabus.materials.map(m => `<li>${m}</li>`).join('')}</ul>` : ''}
+    ${generatedSyllabus.resources && generatedSyllabus.resources.length > 0 ? `<h2>Resources</h2><ul>${generatedSyllabus.resources.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}
+    ${generatedSyllabus.companion_courses && generatedSyllabus.companion_courses.length > 0 ? `<h2>Companion Courses</h2><ul>${generatedSyllabus.companion_courses.map(c => `<li>${c}</li>`).join('')}</ul>` : ''}
+    <h2>Investment & ROI</h2>
+    ${generatedSyllabus.estimated_pricing ? `<p><strong>Pricing:</strong> ${generatedSyllabus.estimated_pricing}</p>` : ''}
+    ${generatedSyllabus.roi ? `<p><strong>ROI:</strong> ${generatedSyllabus.roi}</p>` : ''}
+    ${generatedSyllabus.notes ? `<h2>Notes</h2><p>${generatedSyllabus.notes}</p>` : ''}
+</body>
+</html>`;
             
             const blob = new Blob([html], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
@@ -249,128 +293,358 @@ ${generatedSyllabus.estimated_pricing ? `<h2>Investment</h2><p>${generatedSyllab
             URL.revokeObjectURL(url);
           };
 
-          return h('div', { className: 'min-h-screen bg-gray-50' },
-            h('div', { className: 'bg-gradient-to-r from-red-900 to-red-800 text-white py-6 px-8' },
-              h('div', { className: 'max-w-7xl mx-auto' },
-                h('h1', { className: 'text-3xl font-bold' }, 'Training Syllabus Generator'),
-                h('p', { className: 'text-red-100 mt-1' }, 'AI-Powered Custom Training Development')
-              )
-            ),
-            h('div', { className: 'max-w-7xl mx-auto p-8' },
-              h('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
-                h('h2', { className: 'text-xl font-semibold mb-4' }, 'API Configuration'),
-                h('div', { className: 'grid grid-cols-2 gap-4' },
-                  h('select', {
-                    value: apiConfig.provider,
-                    onChange: (e) => setApiConfig(prev => ({ ...prev, provider: e.target.value })),
-                    className: 'px-4 py-2 border rounded-lg'
-                  },
-                    h('option', { value: 'openai' }, 'OpenAI'),
-                    h('option', { value: 'anthropic' }, 'Anthropic')
-                  ),
-                  h('input', {
-                    type: 'password',
-                    value: apiConfig.apiKey,
-                    onChange: (e) => setApiConfig(prev => ({ ...prev, apiKey: e.target.value })),
-                    placeholder: 'Enter API Key',
-                    className: 'px-4 py-2 border rounded-lg'
-                  })
-                )
-              ),
-              h('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
-                h('h2', { className: 'text-xl font-semibold mb-4' }, 'Company Information'),
-                h('div', { className: 'space-y-4' },
-                  h('input', {
-                    type: 'text',
-                    value: intakeData.companyName,
-                    onChange: (e) => handleInputChange('companyName', e.target.value),
-                    placeholder: 'Company Name *',
-                    className: 'w-full px-4 py-2 border rounded-lg'
-                  }),
-                  h('input', {
-                    type: 'text',
-                    value: intakeData.industry,
-                    onChange: (e) => handleInputChange('industry', e.target.value),
-                    placeholder: 'Industry *',
-                    className: 'w-full px-4 py-2 border rounded-lg'
-                  }),
-                  h('input', {
-                    type: 'text',
-                    value: intakeData.targetAudienceRoles,
-                    onChange: (e) => handleInputChange('targetAudienceRoles', e.target.value),
-                    placeholder: 'Target Audience',
-                    className: 'w-full px-4 py-2 border rounded-lg'
-                  })
-                )
-              ),
-              h('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
-                h('h2', { className: 'text-xl font-semibold mb-4' }, 'Training Libraries'),
-                h('div', { className: 'space-y-2' },
-                  ...libraryOptions.map(lib =>
-                    h('label', { key: lib, className: 'flex items-center space-x-2' },
-                      h('input', {
-                        type: 'checkbox',
-                        checked: intakeData.librariesCandidate.includes(lib),
-                        onChange: () => handleLibraryToggle(lib),
-                        className: 'w-4 h-4'
-                      }),
-                      h('span', null, lib.replace(/_/g, ' '))
-                    )
-                  )
-                )
-              ),
-              h('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-6' },
-                h('textarea', {
-                  value: intakeData.businessGoals,
-                  onChange: (e) => handleInputChange('businessGoals', e.target.value),
-                  placeholder: 'Business Goals',
-                  rows: 3,
-                  className: 'w-full px-4 py-2 border rounded-lg mb-4'
-                }),
-                h('textarea', {
-                  value: intakeData.painPoints,
-                  onChange: (e) => handleInputChange('painPoints', e.target.value),
-                  placeholder: 'Pain Points',
-                  rows: 3,
-                  className: 'w-full px-4 py-2 border rounded-lg'
-                })
-              ),
-              h('button', {
-                onClick: generateSyllabus,
-                disabled: isGenerating,
-                className: 'w-full py-4 bg-red-900 text-white rounded-lg font-semibold hover:bg-red-800 disabled:opacity-50'
-              }, isGenerating ? 'Generating...' : 'Generate Syllabus'),
-              generatedSyllabus && h('div', { className: 'bg-white rounded-lg shadow-lg p-8 mt-8' },
-                h('div', { className: 'flex justify-between mb-6' },
-                  h('h2', { className: 'text-2xl font-bold' }, 'Generated Syllabus'),
-                  h('div', { className: 'flex gap-3' },
-                    h('button', {
-                      onClick: downloadJSON,
-                      className: 'px-4 py-2 bg-blue-600 text-white rounded-lg'
-                    }, 'Download JSON'),
-                    h('button', {
-                      onClick: downloadHTML,
-                      className: 'px-4 py-2 bg-green-600 text-white rounded-lg'
-                    }, 'Download HTML')
-                  )
-                ),
-                h('h3', { className: 'text-xl font-bold mb-2' }, generatedSyllabus.course_title),
-                h('p', { className: 'text-gray-700 mb-4' }, generatedSyllabus.description),
-                h('h4', { className: 'font-semibold mt-4' }, 'Objectives:'),
-                h('ul', { className: 'list-disc list-inside' },
-                  ...generatedSyllabus.objectives.map((obj, i) =>
-                    h('li', { key: i }, obj)
-                  )
-                )
-              )
-            )
+          return (
+            <div className="min-h-screen bg-gray-50">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-red-900 to-red-800 text-white py-6 px-8 shadow-lg">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                  <div>
+                    <h1 className="text-3xl font-bold">Training Syllabus Generator</h1>
+                    <p className="text-red-100 mt-1">AI-Powered Custom Training Development</p>
+                  </div>
+                  <button
+                    onClick={() => setShowApiConfig(!showApiConfig)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all"
+                  >
+                    <SettingsIcon />
+                    API Config
+                  </button>
+                </div>
+              </div>
+
+              <div className="max-w-7xl mx-auto p-8">
+                {/* API Configuration */}
+                {showApiConfig && (
+                  <div className="bg-white rounded-lg shadow-md p-6 mb-6 border-l-4 border-red-800">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <SettingsIcon />
+                      API Configuration
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">AI Provider</label>
+                        <select
+                          value={apiConfig.provider}
+                          onChange={(e) => setApiConfig(prev => ({ ...prev, provider: e.target.value }))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                        >
+                          <option value="openai">OpenAI (GPT-4)</option>
+                          <option value="anthropic">Anthropic (Claude)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">API Key *</label>
+                        <input
+                          type="password"
+                          value={apiConfig.apiKey}
+                          onChange={(e) => setApiConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                          placeholder="Enter your API key"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-3">Your API key is used only for this session and is never stored.</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column */}
+                  <div className="space-y-6">
+                    {/* Section A: Prospect Basics */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-semibold text-red-900 mb-4 border-b-2 border-red-800 pb-2">
+                        A. Prospect Basics
+                      </h2>
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          value={intakeData.companyName}
+                          onChange={(e) => handleInputChange('companyName', e.target.value)}
+                          placeholder="Company Name *"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="url"
+                          value={intakeData.websiteUrl}
+                          onChange={(e) => handleInputChange('websiteUrl', e.target.value)}
+                          placeholder="Website URL *"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.aliases}
+                          onChange={(e) => handleInputChange('aliases', e.target.value)}
+                          placeholder="Known Aliases or Brands"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <div className="grid grid-cols-2 gap-3">
+                          <input
+                            type="text"
+                            value={intakeData.industry}
+                            onChange={(e) => handleInputChange('industry', e.target.value)}
+                            placeholder="Industry *"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                          />
+                          <input
+                            type="text"
+                            value={intakeData.subsector}
+                            onChange={(e) => handleInputChange('subsector', e.target.value)}
+                            placeholder="Subsector"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={intakeData.contactName}
+                          onChange={(e) => handleInputChange('contactName', e.target.value)}
+                          placeholder="Primary Contact Name *"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Section B: Training Intent */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-semibold text-red-900 mb-4 border-b-2 border-red-800 pb-2">
+                        B. Training Intent & Scope
+                      </h2>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Libraries Likely in Scope * (select all that apply)
+                          </label>
+                          <div className="space-y-2">
+                            {libraryOptions.map(lib => (
+                              <label key={lib.id} className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={intakeData.librariesCandidate.includes(lib.id)}
+                                  onChange={() => handleLibraryToggle(lib.id)}
+                                  className="w-4 h-4 text-red-800 border-gray-300 rounded focus:ring-red-800"
+                                />
+                                <span className="text-sm text-gray-700">{lib.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <textarea
+                          value={intakeData.businessGoals}
+                          onChange={(e) => handleInputChange('businessGoals', e.target.value)}
+                          rows="3"
+                          placeholder="Top 3 Business Goals"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <textarea
+                          value={intakeData.painPoints}
+                          onChange={(e) => handleInputChange('painPoints', e.target.value)}
+                          rows="3"
+                          placeholder="Key Pain Points"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.targetAudienceRoles}
+                          onChange={(e) => handleInputChange('targetAudienceRoles', e.target.value)}
+                          placeholder="Target Audience Roles"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <select
+                          value={intakeData.deliveryPreference}
+                          onChange={(e) => handleInputChange('deliveryPreference', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        >
+                          <option value="in_person">In-Person</option>
+                          <option value="remote">Remote</option>
+                          <option value="blended">Blended</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-6">
+                    {/* Section C: Web Research Seeds */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-semibold text-red-900 mb-4 border-b-2 border-red-800 pb-2">
+                        C. Web Research Seeds
+                      </h2>
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          value={intakeData.competitors}
+                          onChange={(e) => handleInputChange('competitors', e.target.value)}
+                          placeholder="Competitors or Peers"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.productsProcesses}
+                          onChange={(e) => handleInputChange('productsProcesses', e.target.value)}
+                          placeholder="Core Products/Processes"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Regulatory Scope</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {regulatoryOptions.map(reg => (
+                              <label key={reg} className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={intakeData.regulatoryScope.includes(reg)}
+                                  onChange={() => handleRegulatoryToggle(reg)}
+                                  className="w-4 h-4 text-red-800 border-gray-300 rounded focus:ring-red-800"
+                                />
+                                <span className="text-sm text-gray-700">{reg}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={intakeData.fundingRegion}
+                          onChange={(e) => handleInputChange('fundingRegion', e.target.value)}
+                          placeholder="Funding Region *"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Section D: Evidence */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-semibold text-red-900 mb-4 border-b-2 border-red-800 pb-2">
+                        D. Evidence (Optional)
+                      </h2>
+                      <div className="space-y-4">
+                        <textarea
+                          value={intakeData.links}
+                          onChange={(e) => handleInputChange('links', e.target.value)}
+                          rows="2"
+                          placeholder="Links to Public Pages"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.kpis}
+                          onChange={(e) => handleInputChange('kpis', e.target.value)}
+                          placeholder="Known KPIs to Target"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.toolsInPlace}
+                          onChange={(e) => handleInputChange('toolsInPlace', e.target.value)}
+                          placeholder="Tools in Place"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Generate Button */}
+                    <button
+                      onClick={generateSyllabus}
+                      disabled={isGenerating || !apiConfig.apiKey}
+                      className="w-full py-4 bg-gradient-to-r from-red-900 to-red-800 text-white rounded-lg font-semibold text-lg hover:from-red-800 hover:to-red-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <LoaderIcon />
+                          Generating Syllabus...
+                        </>
+                      ) : (
+                        <>
+                          <FileTextIcon />
+                          Generate Training Syllabus
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Generated Syllabus Preview */}
+                {generatedSyllabus && (
+                  <div className="mt-8 bg-white rounded-lg shadow-lg p-8 border-t-4 border-red-800">
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <h2 className="text-2xl font-bold text-red-900 flex items-center gap-2">
+                          <CheckIcon />
+                          Generated Syllabus
+                        </h2>
+                        <p className="text-gray-600 mt-1">Review and download your customized training syllabus</p>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={downloadJSON}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <DownloadIcon />
+                          JSON
+                        </button>
+                        <button
+                          onClick={downloadHTML}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          <DownloadIcon />
+                          HTML (Word)
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{generatedSyllabus.course_title}</h3>
+                        <p className="text-sm text-gray-600">Category: {generatedSyllabus.training_category}</p>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">Description</h4>
+                        <p className="text-gray-700 text-sm">{generatedSyllabus.description}</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 mb-1">Target Audience</h4>
+                          <p className="text-sm text-gray-700">{generatedSyllabus.target_audience}</p>
+                        </div>
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 mb-1">Duration</h4>
+                          <p className="text-sm text-gray-700">{generatedSyllabus.estimated_duration}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">Learning Objectives</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                          {generatedSyllabus.objectives.map((obj, idx) => (
+                            <li key={idx}>{obj}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">Curriculum</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                          {generatedSyllabus.curriculum.map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {generatedSyllabus.estimated_pricing && (
+                        <div className="bg-green-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 mb-2">Investment & ROI</h4>
+                          <p className="text-sm text-gray-700 mb-1"><strong>Pricing:</strong> {generatedSyllabus.estimated_pricing}</p>
+                          {generatedSyllabus.roi && <p className="text-sm text-gray-700"><strong>Expected ROI:</strong> {generatedSyllabus.roi}</p>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           );
         }
 
-        // Wait for page load, then render
-        window.addEventListener('load', () => {
-          ReactDOM.render(h(App), document.getElementById('root'));
-        });
+        ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
 </html>
