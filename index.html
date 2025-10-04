@@ -3,526 +3,648 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Syllabus to Missions Generator</title>
+    <title>Training Syllabus Generator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
-    <div id="app"></div>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        // Simple icon components
+        const FileTextIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+        const DownloadIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
+        const SettingsIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+        const LoaderIcon = () => <svg className="animate-spin w-6 h-6" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
+        const CheckIcon = () => <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 
-    <script>
-        let apiKey = '';
-        let apiProvider = 'openai';
-        let syllabusData = null;
-        let selectedTopics = [];
-        let generatedMissions = [];
-        let isGenerating = false;
-        let currentMissionIndex = 0;
+        function App() {
+          const [apiConfig, setApiConfig] = useState({
+            provider: 'openai',
+            apiKey: ''
+          });
 
-        function render() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="min-h-screen">
-                    <div class="bg-gradient-to-r from-indigo-900 to-indigo-800 text-white py-6 px-8 shadow-lg">
-                        <div class="max-w-7xl mx-auto">
-                            <h1 class="text-3xl font-bold">📚 Syllabus to Missions Generator</h1>
-                            <p class="text-indigo-100 mt-1">Transform training syllabi into production-ready microlearning missions</p>
-                        </div>
-                    </div>
+          const [showApiConfig, setShowApiConfig] = useState(true);
+          const [isGenerating, setIsGenerating] = useState(false);
+          const [generatedSyllabus, setGeneratedSyllabus] = useState(null);
 
-                    <div class="max-w-7xl mx-auto p-8">
-                        <div class="bg-white rounded-lg shadow-md p-6 mb-6 border-l-4 border-indigo-800">
-                            <h2 class="text-xl font-semibold mb-4">⚙️ API Configuration</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">AI Provider</label>
-                                    <select id="apiProvider" class="w-full px-4 py-2 border rounded-lg">
-                                        <option value="openai">OpenAI (GPT-4)</option>
-                                        <option value="anthropic">Anthropic (Claude)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">API Key *</label>
-                                    <input type="password" id="apiKey" placeholder="Enter your API key" 
-                                           class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-800">
-                                </div>
-                            </div>
-                        </div>
+          const [intakeData, setIntakeData] = useState({
+            companyName: '',
+            websiteUrl: '',
+            aliases: '',
+            industry: '',
+            subsector: '',
+            naics: '',
+            hqCity: '',
+            hqRegion: '',
+            regionsToCover: '',
+            companySize: '',
+            contactName: '',
+            contactRole: '',
+            contactEmail: '',
+            librariesCandidate: [],
+            businessGoals: '',
+            painPoints: '',
+            targetAudienceRoles: '',
+            audienceSize: '',
+            deliveryPreference: 'in_person',
+            timeline: '',
+            urgencyDriver: '',
+            competitors: '',
+            productsProcesses: '',
+            regulatoryScope: [],
+            internalKeywords: '',
+            fundingRegion: '',
+            recencyWindowMonths: '6',
+            excludeTerms: '',
+            links: '',
+            documents: '',
+            kpis: '',
+            toolsInPlace: '',
+            scanDepth: 'standard',
+            reportFormat: 'PDF',
+            citationStyle: 'links_list'
+          });
 
-                        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                            <h2 class="text-xl font-semibold mb-4">📤 Step 1: Upload Syllabus JSON</h2>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload JSON File</label>
-                                    <input type="file" id="fileUpload" accept=".json" 
-                                           class="w-full px-4 py-2 border rounded-lg">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Or Paste JSON</label>
-                                    <textarea id="jsonPaste" rows="4" placeholder="Paste syllabus JSON here..."
-                                              class="w-full px-4 py-2 border rounded-lg text-sm font-mono"></textarea>
-                                    <button onclick="loadPastedJSON()" 
-                                            class="mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                                        Load JSON
-                                    </button>
-                                </div>
-                            </div>
-                            ${syllabusData ? `
-                                <div class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                                    <div class="font-semibold text-green-800">✓ Syllabus Loaded: ${syllabusData.course_title}</div>
-                                    <p class="text-sm text-green-700 mt-1">
-                                        ${syllabusData.curriculum?.length || 0} curriculum topics available
-                                    </p>
-                                </div>
-                            ` : ''}
-                        </div>
+          const libraryOptions = [
+            { id: 'leadership_supervisory', label: 'Leadership & Supervisory' },
+            { id: 'operational_excellence_lean_ci', label: 'Operational Excellence & Lean/CI' },
+            { id: 'quality_systems_compliance', label: 'Quality Systems & Compliance' },
+            { id: 'change_leadership_culture', label: 'Change Leadership & Culture' },
+            { id: 'safety_operational_risk', label: 'Safety & Operational Risk' },
+            { id: 'supply_chain_lean_logistics', label: 'Supply Chain & Lean Logistics' },
+            { id: 'metrics_data_driven_decisions', label: 'Metrics & Data-Driven Decisions' },
+            { id: 'soft_skills_operations', label: 'Soft Skills for Operations' }
+          ];
 
-                        ${syllabusData ? `
-                            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                                <h2 class="text-xl font-semibold mb-4">✅ Step 2: Select Topics to Generate</h2>
-                                <p class="text-sm text-gray-600 mb-4">Select which curriculum topics to generate as missions (max 9 min each)</p>
-                                <div class="space-y-3">
-                                    ${syllabusData.curriculum.map((topic, idx) => `
-                                        <label class="flex items-start space-x-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
-                                            <input type="checkbox" 
-                                                   id="topic-${idx}"
-                                                   ${selectedTopics.includes(idx) ? 'checked' : ''}
-                                                   onchange="toggleTopic(${idx})"
-                                                   class="mt-1 w-5 h-5 text-indigo-600 rounded">
-                                            <div>
-                                                <div class="font-medium text-gray-800">${topic}</div>
-                                                <div class="text-xs text-gray-500">Mission ${idx + 1}</div>
-                                            </div>
-                                        </label>
-                                    `).join('')}
-                                </div>
-                                <button onclick="generateMissions()" 
-                                        ${isGenerating || selectedTopics.length === 0 ? 'disabled' : ''}
-                                        class="mt-6 w-full py-4 bg-gradient-to-r from-indigo-900 to-indigo-800 text-white rounded-lg font-semibold text-lg hover:from-indigo-800 hover:to-indigo-700 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
-                                    ${isGenerating ? `⏳ Generating Mission ${currentMissionIndex + 1} of ${selectedTopics.length}...` : `🚀 Generate ${selectedTopics.length} Mission${selectedTopics.length !== 1 ? 's' : ''}`}
-                                </button>
-                            </div>
-                        ` : ''}
+          const regulatoryOptions = ['ISO 9001', 'ISO 13485', 'FDA 21 CFR 820', 'cGMP', 'OSHA', 'EPA'];
 
-                        ${generatedMissions.length > 0 ? `
-                            <div class="space-y-6">
-                                <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-indigo-800">
-                                    <div class="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h2 class="text-2xl font-bold text-indigo-900">✓ Missions Generated</h2>
-                                            <p class="text-gray-600">${generatedMissions.length} mission${generatedMissions.length !== 1 ? 's' : ''} ready for production</p>
-                                        </div>
-                                        <div class="flex gap-3">
-                                            <button onclick="downloadAllJSON()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                                                ⬇️ All JSON
-                                            </button>
-                                            <button onclick="downloadAllText()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                                                ⬇️ All Text
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+          const handleLibraryToggle = (library) => {
+            setIntakeData(prev => ({
+              ...prev,
+              librariesCandidate: prev.librariesCandidate.includes(library)
+                ? prev.librariesCandidate.filter(l => l !== library)
+                : [...prev.librariesCandidate, library]
+            }));
+          };
 
-                                ${generatedMissions.map((mission, idx) => `
-                                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-400">
-                                        <div class="flex justify-between items-start mb-4">
-                                            <div>
-                                                <h3 class="text-xl font-bold text-gray-800">Mission ${idx + 1}: ${mission.mission_title}</h3>
-                                                <p class="text-sm text-gray-600 mt-1">${mission.slides?.length || 0} slides | Est. ${Math.round((mission.slides?.length || 0) * 37.5 / 60 * 10) / 10} min</p>
-                                            </div>
-                                            <div class="flex gap-2">
-                                                <button onclick="downloadMissionJSON(${idx})" class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
-                                                    JSON
-                                                </button>
-                                                <button onclick="downloadMissionText(${idx})" class="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600">
-                                                    Text
-                                                </button>
-                                                <button onclick="downloadMissionCSV(${idx})" class="px-3 py-1 bg-purple-500 text-white text-sm rounded hover:bg-purple-600">
-                                                    CSV
-                                                </button>
-                                            </div>
-                                        </div>
+          const handleRegulatoryToggle = (reg) => {
+            setIntakeData(prev => ({
+              ...prev,
+              regulatoryScope: prev.regulatoryScope.includes(reg)
+                ? prev.regulatoryScope.filter(r => r !== reg)
+                : [...prev.regulatoryScope, reg]
+            }));
+          };
 
-                                        <div class="space-y-4">
-                                            <div class="bg-gray-50 p-4 rounded">
-                                                <h4 class="font-semibold text-gray-800 mb-2">Introduction</h4>
-                                                <p class="text-sm text-gray-700">${mission.introduction}</p>
-                                            </div>
+          const handleInputChange = (field, value) => {
+            setIntakeData(prev => ({ ...prev, [field]: value }));
+          };
 
-                                            <div>
-                                                <h4 class="font-semibold text-gray-800 mb-2">Slide Outline</h4>
-                                                <div class="overflow-x-auto">
-                                                    <table class="w-full text-sm border">
-                                                        <thead class="bg-gray-100">
-                                                            <tr>
-                                                                <th class="border px-3 py-2 text-left">Slide</th>
-                                                                <th class="border px-3 py-2 text-left">Title</th>
-                                                                <th class="border px-3 py-2 text-left">Bullets</th>
-                                                                <th class="border px-3 py-2 text-left">Voice-Over Prompt</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            ${mission.slides.map((slide, i) => `
-                                                                <tr>
-                                                                    <td class="border px-3 py-2">${i + 1}</td>
-                                                                    <td class="border px-3 py-2 font-medium">${slide.title}</td>
-                                                                    <td class="border px-3 py-2">${slide.bullets.join('<br>')}</td>
-                                                                    <td class="border px-3 py-2 text-gray-600">${slide.voiceover_prompt}</td>
-                                                                </tr>
-                                                            `).join('')}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div class="bg-blue-50 p-4 rounded">
-                                                    <h4 class="font-semibold text-gray-800 mb-2">Learner Steps</h4>
-                                                    <ul class="text-sm text-gray-700 space-y-1">
-                                                        ${mission.learner_steps.map(step => `<li>• ${step}</li>`).join('')}
-                                                    </ul>
-                                                </div>
-
-                                                <div class="bg-green-50 p-4 rounded">
-                                                    <h4 class="font-semibold text-gray-800 mb-2">Habits</h4>
-                                                    <ul class="text-sm text-gray-700 space-y-1">
-                                                        ${mission.habits.daily ? `<li>• <strong>Daily:</strong> ${mission.habits.daily}</li>` : ''}
-                                                        ${mission.habits.weekly ? `<li>• <strong>Weekly:</strong> ${mission.habits.weekly}</li>` : ''}
-                                                        ${mission.habits.monthly ? `<li>• <strong>Monthly:</strong> ${mission.habits.monthly}</li>` : ''}
-                                                        ${mission.habits.quarterly ? `<li>• <strong>Quarterly:</strong> ${mission.habits.quarterly}</li>` : ''}
-                                                    </ul>
-                                                </div>
-                                            </div>
-
-                                            <div class="bg-purple-50 p-4 rounded">
-                                                <h4 class="font-semibold text-gray-800 mb-2">Chat Prompt</h4>
-                                                <p class="text-sm text-gray-700">${mission.chat_prompt}</p>
-                                            </div>
-
-                                            <div class="bg-orange-50 p-4 rounded">
-                                                <h4 class="font-semibold text-gray-800 mb-2">Mentor Questions</h4>
-                                                <ul class="text-sm text-gray-700 space-y-1">
-                                                    ${mission.mentor_questions.map(q => `<li>• ${q}</li>`).join('')}
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-
-            const apiProviderEl = document.getElementById('apiProvider');
-            const apiKeyEl = document.getElementById('apiKey');
-            const fileUploadEl = document.getElementById('fileUpload');
-
-            if (apiProviderEl) {
-                apiProviderEl.value = apiProvider;
-                apiProviderEl.onchange = (e) => {
-                    apiProvider = e.target.value;
-                };
+          const generateSyllabus = async () => {
+            if (!apiConfig.apiKey) {
+              alert('Please enter your API key in the configuration section');
+              return;
             }
 
-            if (apiKeyEl) {
-                apiKeyEl.value = apiKey;
-                apiKeyEl.oninput = (e) => {
-                    apiKey = e.target.value;
-                };
-            }
+            setIsGenerating(true);
 
-            if (fileUploadEl) {
-                fileUploadEl.onchange = handleFileUpload;
-            }
-        }
+            const prompt = `You are an expert training curriculum designer for Manex, a manufacturing excellence consulting organization.
 
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        syllabusData = JSON.parse(e.target.result);
-                        selectedTopics = [];
-                        generatedMissions = [];
-                        render();
-                    } catch (error) {
-                        alert('Error parsing JSON: ' + error.message);
-                    }
-                };
-                reader.readAsText(file);
-            }
-        }
+Based on the following client intake information, generate a comprehensive training syllabus in JSON format.
 
-        function loadPastedJSON() {
-            const jsonText = document.getElementById('jsonPaste').value;
-            if (!jsonText.trim()) {
-                alert('Please paste JSON first');
-                return;
-            }
-            try {
-                syllabusData = JSON.parse(jsonText);
-                selectedTopics = [];
-                generatedMissions = [];
-                render();
-            } catch (error) {
-                alert('Error parsing JSON: ' + error.message);
-            }
-        }
+INTAKE DATA:
+Company: ${intakeData.companyName}
+Industry: ${intakeData.industry} - ${intakeData.subsector}
+Target Audience: ${intakeData.targetAudienceRoles}
+Training Libraries: ${intakeData.librariesCandidate.join(', ')}
+Business Goals: ${intakeData.businessGoals}
+Pain Points: ${intakeData.painPoints}
+Delivery Mode: ${intakeData.deliveryPreference}
 
-        function toggleTopic(index) {
-            if (selectedTopics.includes(index)) {
-                selectedTopics = selectedTopics.filter(i => i !== index);
-            } else {
-                selectedTopics.push(index);
-            }
-            render();
-        }
+MANEX EXPERTISE DOMAINS:
+- leadership_supervisory: transition to management, goal setting, communication, delegation, decision making, coaching
+- operational_excellence_lean_ci: lean fundamentals, 5S, kaizen, VSM, standard work, A3, DMAIC
+- quality_systems_compliance: ISO 9001, ISO 13485, FDA QSR, cGMP, risk management, CAPA, auditing
+- change_leadership_culture: change models, stakeholder engagement, CI culture, resistance management
+- safety_operational_risk: safety culture, hazard ID, behavior-based safety, incident investigation
+- supply_chain_lean_logistics: lean supply chain, inventory, kanban, supplier quality
+- metrics_data_driven_decisions: data literacy, KPI definition, dashboards, SPC, control charts
+- soft_skills_operations: communication, influencing, time management, conflict resolution
 
-        async function generateMissions() {
-            if (!apiKey) {
-                alert('Please enter your API key');
-                return;
-            }
-
-            if (selectedTopics.length === 0) {
-                alert('Please select at least one topic');
-                return;
-            }
-
-            isGenerating = true;
-            render();
-
-            generatedMissions = [];
-
-            for (let i = 0; i < selectedTopics.length; i++) {
-                const topicIndex = selectedTopics[i];
-                currentMissionIndex = i;
-                render();
-                
-                const topic = syllabusData.curriculum[topicIndex];
-                
-                const prompt = `You are an expert instructional designer creating microlearning missions.
-
-Create a production-ready mission document for this training topic:
-
-SYLLABUS CONTEXT:
-Course: ${syllabusData.course_title}
-Overall Objectives: ${syllabusData.objectives.join(', ')}
-Target Audience: ${syllabusData.target_audience}
-Training Method: ${syllabusData.training_method}
-
-TOPIC TO DEVELOP:
-${topic}
-
-MISSION REQUIREMENTS:
-- Max 9 minutes (12-18 slides at 30-45 seconds each)
-- Adapt slide flow based on content type (conceptual vs. procedural vs. behavioral)
-- Voice-over prompts should be reflective questions, NOT full scripts
-
-Generate a JSON object with this EXACT structure:
+Generate a JSON object with these fields:
 {
-  "mission_title": "Clear, compelling title for this topic",
-  "introduction": "2-3 sentence paragraph introducing the topic and why it matters",
-  "slides": [
-    {
-      "slide_number": 1,
-      "title": "Slide title",
-      "bullets": ["Bullet 1", "Bullet 2", "Bullet 3"],
-      "voiceover_prompt": "Reflective question or thinking prompt"
-    }
-  ],
-  "learner_steps": [
-    "Read the material in this mission",
-    "Watch the presentation video (5-7 minutes)",
-    "Interact with the chat activity",
-    "Reflect on and answer the mentor questions"
-  ],
-  "chat_prompt": "One engaging question about applying this topic",
-  "mentor_questions": [
-    "Question 1 about application",
-    "Question 2 about challenges",
-    "Question 3 about implementation",
-    "Question 4 about making it sustainable"
-  ],
-  "habits": {
-    "daily": "Daily habit suggestion or null",
-    "weekly": "Weekly habit suggestion or null", 
-    "monthly": "Monthly habit suggestion or null",
-    "quarterly": "Quarterly habit suggestion or null"
-  }
+  "training_category": "primary domain from above",
+  "course_title": "compelling, specific title",
+  "description": "2-3 paragraphs describing the course",
+  "objectives": ["array of at least 5 specific learning objectives"],
+  "target_audience": "detailed description",
+  "training_method": "${intakeData.deliveryPreference} with specifics",
+  "estimated_duration": "reasonable duration",
+  "prerequisites": "what participants should know",
+  "curriculum": ["array of at least 8 detailed topics"],
+  "materials": ["materials and resources needed"],
+  "resources": ["recommended readings, tools"],
+  "companion_courses": ["related courses"],
+  "estimated_cost_to_develop": "cost range",
+  "estimated_pricing": "per-participant pricing",
+  "roi": "expected ROI and business impact",
+  "notes": "additional recommendations"
 }
 
-CRITICAL: Return ONLY valid JSON, no other text.`;
+CRITICAL: Return ONLY valid JSON with no other text before or after.`;
 
-                try {
-                    let response;
-
-                    if (apiProvider === 'openai') {
-                        response = await fetch('https://api.openai.com/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${apiKey}`
-                            },
-                            body: JSON.stringify({
-                                model: 'gpt-4o',
-                                messages: [
-                                    { role: 'system', content: 'You are an expert instructional designer. Always respond with valid JSON only.' },
-                                    { role: 'user', content: prompt }
-                                ],
-                                temperature: 0.7
-                            })
-                        });
-                    } else {
-                        response = await fetch('https://api.anthropic.com/v1/messages', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'x-api-key': apiKey,
-                                'anthropic-version': '2023-06-01'
-                            },
-                            body: JSON.stringify({
-                                model: 'claude-sonnet-4-20250514',
-                                max_tokens: 4096,
-                                messages: [{ role: 'user', content: prompt }]
-                            })
-                        });
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(`API Error ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    let content = apiProvider === 'openai' 
-                        ? data.choices[0].message.content 
-                        : data.content[0].text;
-
-                    content = content.trim();
-                    if (content.startsWith('```json')) {
-                        content = content.replace(/^```json\n/, '').replace(/\n```$/, '');
-                    } else if (content.startsWith('```')) {
-                        content = content.replace(/^```\n/, '').replace(/\n```$/, '');
-                    }
-
-                    const mission = JSON.parse(content);
-                    generatedMissions.push(mission);
-
-                } catch (error) {
-                    alert(`Error generating mission ${topicIndex + 1}: ${error.message}`);
-                    break;
-                }
-            }
-
-            isGenerating = false;
-            currentMissionIndex = 0;
-            render();
-        }
-
-        function downloadMissionJSON(index) {
-            const mission = generatedMissions[index];
-            const blob = new Blob([JSON.stringify(mission, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Mission_${index + 1}_${mission.mission_title.replace(/\s+/g, '_')}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function downloadMissionText(index) {
-            const mission = generatedMissions[index];
-            let text = `Mission ${index + 1}: ${mission.mission_title}\n\n`;
-            text += `Introduction\n${mission.introduction}\n\n`;
-            text += `Slide Outline\n`;
-            text += `Slide\tTitle\tSlide Bullets\tVoice-Over Prompt\n`;
-            mission.slides.forEach((slide, i) => {
-                text += `${i + 1}\t${slide.title}\t${slide.bullets.join('\n')}\t${slide.voiceover_prompt}\n`;
-            });
-            text += `\nLearner Steps\n${mission.learner_steps.map(s => '• ' + s).join('\n')}\n\n`;
-            text += `Chat Prompt\n${mission.chat_prompt}\n\n`;
-            text += `Mentor Questions\n${mission.mentor_questions.map(q => '• ' + q).join('\n')}\n\n`;
-            text += `Habits\n`;
-            if (mission.habits.daily) text += `• Daily: ${mission.habits.daily}\n`;
-            if (mission.habits.weekly) text += `• Weekly: ${mission.habits.weekly}\n`;
-            if (mission.habits.monthly) text += `• Monthly: ${mission.habits.monthly}\n`;
-            if (mission.habits.quarterly) text += `• Quarterly: ${mission.habits.quarterly}\n`;
-
-            const blob = new Blob([text], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Mission_${index + 1}_${mission.mission_title.replace(/\s+/g, '_')}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function downloadMissionCSV(index) {
-            const mission = generatedMissions[index];
-            const headers = ['Slide', 'Title', 'Slide Bullets', 'Voice-Over Prompt'];
-            const rows = mission.slides.map((s, i) => [
-                i + 1,
-                s.title,
-                s.bullets.join(' | '),
-                s.voiceover_prompt
-            ]);
-
-            const csv = [
-                headers.join(','),
-                ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-            ].join('\n');
-
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Mission_${index + 1}_Slides_${mission.mission_title.replace(/\s+/g, '_')}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function downloadAllJSON() {
-            const blob = new Blob([JSON.stringify(generatedMissions, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `All_Missions_${syllabusData.course_title.replace(/\s+/g, '_')}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function downloadAllText() {
-            let allText = '';
-            generatedMissions.forEach((mission, index) => {
-                allText += `Mission ${index + 1}: ${mission.mission_title}\n\n`;
-                allText += `Introduction\n${mission.introduction}\n\n`;
-                allText += `Slide Outline\n`;
-                allText += `Slide\tTitle\tSlide Bullets\tVoice-Over Prompt\n`;
-                mission.slides.forEach((slide, i) => {
-                    allText += `${i + 1}\t${slide.title}\t${slide.bullets.join('\n')}\t${slide.voiceover_prompt}\n`;
+            try {
+              let response;
+              
+              if (apiConfig.provider === 'openai') {
+                response = await fetch('https://api.openai.com/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiConfig.apiKey}`
+                  },
+                  body: JSON.stringify({
+                    model: 'gpt-4o',
+                    messages: [
+                      { role: 'system', content: 'You are an expert training curriculum designer. Always respond with valid JSON only, no other text.' },
+                      { role: 'user', content: prompt }
+                    ],
+                    temperature: 0.7
+                  })
                 });
-                allText += `\nLearner Steps\n${mission.learner_steps.map(s => '• ' + s).join('\n')}\n\n`;
-                allText += `Chat Prompt\n${mission.chat_prompt}\n\n`;
-                allText += `Mentor Questions\n${mission.mentor_questions.map(q => '• ' + q).join('\n')}\n\n`;
-                allText += `Habits\n`;
-                if (mission.habits.daily) allText += `• Daily: ${mission.habits.daily}\n`;
-                if (mission.habits.weekly) allText += `• Weekly: ${mission.habits.weekly}\n`;
-                if (mission.habits.monthly) allText += `• Monthly: ${mission.habits.monthly}\n`;
-                if (mission.habits.quarterly) allText += `• Quarterly: ${mission.habits.quarterly}\n`;
-                allText += '\n\n' + '='.repeat(80) + '\n\n';
-            });
+              } else {
+                response = await fetch('https://api.anthropic.com/v1/messages', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiConfig.apiKey,
+                    'anthropic-version': '2023-06-01'
+                  },
+                  body: JSON.stringify({
+                    model: 'claude-sonnet-4-20250514',
+                    max_tokens: 4096,
+                    messages: [{ role: 'user', content: prompt }]
+                  })
+                });
+              }
 
-            const blob = new Blob([allText], { type: 'text/plain' });
+              if (!response.ok) {
+                const errorData = await response.text();
+                throw new Error(`API Error ${response.status}: ${errorData}`);
+              }
+
+              const data = await response.json();
+              let content;
+
+              if (apiConfig.provider === 'openai') {
+                content = data.choices[0].message.content;
+              } else {
+                content = data.content[0].text;
+              }
+
+              // Clean the content - remove markdown code blocks if present
+              let cleanedContent = content.trim();
+              if (cleanedContent.startsWith('```json')) {
+                cleanedContent = cleanedContent.replace(/^```json\n/, '').replace(/\n```$/, '');
+              } else if (cleanedContent.startsWith('```')) {
+                cleanedContent = cleanedContent.replace(/^```\n/, '').replace(/\n```$/, '');
+              }
+
+              const syllabusJson = JSON.parse(cleanedContent);
+              setGeneratedSyllabus(syllabusJson);
+            } catch (error) {
+              console.error('Generation error:', error);
+              alert(`Error generating syllabus: ${error.message}\n\nPlease check:\n1. Your API key is correct\n2. You have credits/quota available\n3. Your internet connection is stable`);
+            } finally {
+              setIsGenerating(false);
+            }
+          };
+
+          const downloadJSON = () => {
+            const blob = new Blob([JSON.stringify(generatedSyllabus, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `All_Missions_${syllabusData.course_title.replace(/\s+/g, '_')}.txt`;
+            a.download = `${intakeData.companyName.replace(/\s+/g, '_')}_Syllabus.json`;
             a.click();
             URL.revokeObjectURL(url);
+          };
+
+          const downloadHTML = () => {
+            const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${generatedSyllabus.course_title}</title>
+    <style>
+        body { font-family: Calibri, Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 40px; line-height: 1.6; color: #333; }
+        .header { border-bottom: 4px solid #8B1F1F; padding-bottom: 20px; margin-bottom: 30px; }
+        .company-name { color: #8B1F1F; font-size: 24px; font-weight: bold; }
+        h1 { color: #8B1F1F; font-size: 28px; }
+        h2 { color: #4A7C9C; font-size: 20px; border-bottom: 2px solid #4A7C9C; padding-bottom: 5px; margin-top: 25px; }
+        .meta-info { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        ul { padding-left: 25px; }
+        li { margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">MANEX</div>
+        <p>The Corporation for Manufacturing Excellence</p>
+    </div>
+    <h1>${generatedSyllabus.course_title}</h1>
+    <div class="meta-info">
+        <p><strong>Client:</strong> ${intakeData.companyName}</p>
+        <p><strong>Category:</strong> ${generatedSyllabus.training_category}</p>
+        <p><strong>Duration:</strong> ${generatedSyllabus.estimated_duration}</p>
+        <p><strong>Method:</strong> ${generatedSyllabus.training_method}</p>
+    </div>
+    <h2>Description</h2>
+    <p>${generatedSyllabus.description}</p>
+    <h2>Target Audience</h2>
+    <p>${generatedSyllabus.target_audience}</p>
+    <h2>Learning Objectives</h2>
+    <ul>${generatedSyllabus.objectives.map(o => `<li>${o}</li>`).join('')}</ul>
+    <h2>Prerequisites</h2>
+    <p>${generatedSyllabus.prerequisites}</p>
+    <h2>Curriculum</h2>
+    <ul>${generatedSyllabus.curriculum.map(c => `<li>${c}</li>`).join('')}</ul>
+    ${generatedSyllabus.materials && generatedSyllabus.materials.length > 0 ? `<h2>Materials</h2><ul>${generatedSyllabus.materials.map(m => `<li>${m}</li>`).join('')}</ul>` : ''}
+    ${generatedSyllabus.resources && generatedSyllabus.resources.length > 0 ? `<h2>Resources</h2><ul>${generatedSyllabus.resources.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}
+    ${generatedSyllabus.companion_courses && generatedSyllabus.companion_courses.length > 0 ? `<h2>Companion Courses</h2><ul>${generatedSyllabus.companion_courses.map(c => `<li>${c}</li>`).join('')}</ul>` : ''}
+    <h2>Investment & ROI</h2>
+    ${generatedSyllabus.estimated_pricing ? `<p><strong>Pricing:</strong> ${generatedSyllabus.estimated_pricing}</p>` : ''}
+    ${generatedSyllabus.roi ? `<p><strong>ROI:</strong> ${generatedSyllabus.roi}</p>` : ''}
+    ${generatedSyllabus.notes ? `<h2>Notes</h2><p>${generatedSyllabus.notes}</p>` : ''}
+</body>
+</html>`;
+            
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${intakeData.companyName.replace(/\s+/g, '_')}_Syllabus.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+          };
+
+          return (
+            <div className="min-h-screen bg-gray-50">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-red-900 to-red-800 text-white py-6 px-8 shadow-lg">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                  <div>
+                    <h1 className="text-3xl font-bold">Training Syllabus Generator</h1>
+                    <p className="text-red-100 mt-1">AI-Powered Custom Training Development</p>
+                  </div>
+                  <button
+                    onClick={() => setShowApiConfig(!showApiConfig)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all"
+                  >
+                    <SettingsIcon />
+                    API Config
+                  </button>
+                </div>
+              </div>
+
+              <div className="max-w-7xl mx-auto p-8">
+                {/* API Configuration */}
+                {showApiConfig && (
+                  <div className="bg-white rounded-lg shadow-md p-6 mb-6 border-l-4 border-red-800">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <SettingsIcon />
+                      API Configuration
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">AI Provider</label>
+                        <select
+                          value={apiConfig.provider}
+                          onChange={(e) => setApiConfig(prev => ({ ...prev, provider: e.target.value }))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                        >
+                          <option value="openai">OpenAI (GPT-4)</option>
+                          <option value="anthropic">Anthropic (Claude)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">API Key *</label>
+                        <input
+                          type="password"
+                          value={apiConfig.apiKey}
+                          onChange={(e) => setApiConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent"
+                          placeholder="Enter your API key"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-3">Your API key is used only for this session and is never stored.</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column */}
+                  <div className="space-y-6">
+                    {/* Section A: Prospect Basics */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-semibold text-red-900 mb-4 border-b-2 border-red-800 pb-2">
+                        A. Prospect Basics
+                      </h2>
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          value={intakeData.companyName}
+                          onChange={(e) => handleInputChange('companyName', e.target.value)}
+                          placeholder="Company Name *"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="url"
+                          value={intakeData.websiteUrl}
+                          onChange={(e) => handleInputChange('websiteUrl', e.target.value)}
+                          placeholder="Website URL *"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.aliases}
+                          onChange={(e) => handleInputChange('aliases', e.target.value)}
+                          placeholder="Known Aliases or Brands"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <div className="grid grid-cols-2 gap-3">
+                          <input
+                            type="text"
+                            value={intakeData.industry}
+                            onChange={(e) => handleInputChange('industry', e.target.value)}
+                            placeholder="Industry *"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                          />
+                          <input
+                            type="text"
+                            value={intakeData.subsector}
+                            onChange={(e) => handleInputChange('subsector', e.target.value)}
+                            placeholder="Subsector"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={intakeData.contactName}
+                          onChange={(e) => handleInputChange('contactName', e.target.value)}
+                          placeholder="Primary Contact Name *"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Section B: Training Intent */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-semibold text-red-900 mb-4 border-b-2 border-red-800 pb-2">
+                        B. Training Intent & Scope
+                      </h2>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Libraries Likely in Scope * (select all that apply)
+                          </label>
+                          <div className="space-y-2">
+                            {libraryOptions.map(lib => (
+                              <label key={lib.id} className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={intakeData.librariesCandidate.includes(lib.id)}
+                                  onChange={() => handleLibraryToggle(lib.id)}
+                                  className="w-4 h-4 text-red-800 border-gray-300 rounded focus:ring-red-800"
+                                />
+                                <span className="text-sm text-gray-700">{lib.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <textarea
+                          value={intakeData.businessGoals}
+                          onChange={(e) => handleInputChange('businessGoals', e.target.value)}
+                          rows="3"
+                          placeholder="Top 3 Business Goals"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <textarea
+                          value={intakeData.painPoints}
+                          onChange={(e) => handleInputChange('painPoints', e.target.value)}
+                          rows="3"
+                          placeholder="Key Pain Points"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.targetAudienceRoles}
+                          onChange={(e) => handleInputChange('targetAudienceRoles', e.target.value)}
+                          placeholder="Target Audience Roles"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <select
+                          value={intakeData.deliveryPreference}
+                          onChange={(e) => handleInputChange('deliveryPreference', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        >
+                          <option value="in_person">In-Person</option>
+                          <option value="remote">Remote</option>
+                          <option value="blended">Blended</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-6">
+                    {/* Section C: Web Research Seeds */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-semibold text-red-900 mb-4 border-b-2 border-red-800 pb-2">
+                        C. Web Research Seeds
+                      </h2>
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          value={intakeData.competitors}
+                          onChange={(e) => handleInputChange('competitors', e.target.value)}
+                          placeholder="Competitors or Peers"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.productsProcesses}
+                          onChange={(e) => handleInputChange('productsProcesses', e.target.value)}
+                          placeholder="Core Products/Processes"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Regulatory Scope</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {regulatoryOptions.map(reg => (
+                              <label key={reg} className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={intakeData.regulatoryScope.includes(reg)}
+                                  onChange={() => handleRegulatoryToggle(reg)}
+                                  className="w-4 h-4 text-red-800 border-gray-300 rounded focus:ring-red-800"
+                                />
+                                <span className="text-sm text-gray-700">{reg}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={intakeData.fundingRegion}
+                          onChange={(e) => handleInputChange('fundingRegion', e.target.value)}
+                          placeholder="Funding Region *"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Section D: Evidence */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                      <h2 className="text-xl font-semibold text-red-900 mb-4 border-b-2 border-red-800 pb-2">
+                        D. Evidence (Optional)
+                      </h2>
+                      <div className="space-y-4">
+                        <textarea
+                          value={intakeData.links}
+                          onChange={(e) => handleInputChange('links', e.target.value)}
+                          rows="2"
+                          placeholder="Links to Public Pages"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.kpis}
+                          onChange={(e) => handleInputChange('kpis', e.target.value)}
+                          placeholder="Known KPIs to Target"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={intakeData.toolsInPlace}
+                          onChange={(e) => handleInputChange('toolsInPlace', e.target.value)}
+                          placeholder="Tools in Place"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-800 focus:border-transparent text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Generate Button */}
+                    <button
+                      onClick={generateSyllabus}
+                      disabled={isGenerating || !apiConfig.apiKey}
+                      className="w-full py-4 bg-gradient-to-r from-red-900 to-red-800 text-white rounded-lg font-semibold text-lg hover:from-red-800 hover:to-red-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <LoaderIcon />
+                          Generating Syllabus...
+                        </>
+                      ) : (
+                        <>
+                          <FileTextIcon />
+                          Generate Training Syllabus
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Generated Syllabus Preview */}
+                {generatedSyllabus && (
+                  <div className="mt-8 bg-white rounded-lg shadow-lg p-8 border-t-4 border-red-800">
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <h2 className="text-2xl font-bold text-red-900 flex items-center gap-2">
+                          <CheckIcon />
+                          Generated Syllabus
+                        </h2>
+                        <p className="text-gray-600 mt-1">Review and download your customized training syllabus</p>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={downloadJSON}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <DownloadIcon />
+                          JSON
+                        </button>
+                        <button
+                          onClick={downloadHTML}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          <DownloadIcon />
+                          HTML (Word)
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{generatedSyllabus.course_title}</h3>
+                        <p className="text-sm text-gray-600">Category: {generatedSyllabus.training_category}</p>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">Description</h4>
+                        <p className="text-gray-700 text-sm">{generatedSyllabus.description}</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 mb-1">Target Audience</h4>
+                          <p className="text-sm text-gray-700">{generatedSyllabus.target_audience}</p>
+                        </div>
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 mb-1">Duration</h4>
+                          <p className="text-sm text-gray-700">{generatedSyllabus.estimated_duration}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">Learning Objectives</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                          {generatedSyllabus.objectives.map((obj, idx) => (
+                            <li key={idx}>{obj}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">Curriculum</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                          {generatedSyllabus.curriculum.map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {generatedSyllabus.estimated_pricing && (
+                        <div className="bg-green-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 mb-2">Investment & ROI</h4>
+                          <p className="text-sm text-gray-700 mb-1"><strong>Pricing:</strong> {generatedSyllabus.estimated_pricing}</p>
+                          {generatedSyllabus.roi && <p className="text-sm text-gray-700"><strong>Expected ROI:</strong> {generatedSyllabus.roi}</p>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
         }
 
-        render();
+        ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
 </html>
